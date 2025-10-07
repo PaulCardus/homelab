@@ -1,0 +1,9 @@
+apiVersion: v2
+name: metallb
+description: MetalLB is a load-balancer implementation for bare metal Kubernetes clusters, using standard routing protocols.
+type: application
+version: 1.0.0
+dependencies:
+- name: metallb
+  version: "0.14.3"
+  repository: https://metallb.github.io/metallb

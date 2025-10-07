@@ -1,0 +1,28 @@
+metallb:
+  # Configure MetalLB speaker for L2 mode (ARP-based LoadBalancer)
+  speaker:
+    enabled: true
+    
+  # Controller manages IP address assignments
+  controller:
+    enabled: true
+
+# Custom resources - MetalLB will create these CRDs
+# Note: These go in templates/ because Helm doesn't natively support
+# creating CRDs from values in the upstream MetalLB chart
+
+ipAddressPool:
+  enabled: true
+  name: homelab-pool
+  addresses:
+    # IMPORTANT: Update these IPs to match YOUR network
+    # Reserve a range of IPs that are:
+    # 1. In the same subnet as your nodes (192.168.68.x)
+    # 2. NOT in your DHCP range
+    # 3. Not already assigned to other devices
+    - 192.168.68.130-192.168.68.149
+
+l2Advertisement:
+  enabled: true
+  name: homelab-l2
+  ipAddressPoolName: homelab-pool

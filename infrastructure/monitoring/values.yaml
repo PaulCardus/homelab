@@ -1,36 +1,25 @@
 kube-prometheus-stack:
-  # Prometheus settings
   prometheus:
     prometheusSpec:
-      # Storage for metrics
       retention: 7d
-      storageSpec:
-        volumeClaimTemplate:
-          spec:
-            accessModes: ["ReadWriteOnce"]
-            resources:
-              requests:
-                storage: 10Gi
+      # Disable storage - use emptyDir (data lost on pod restart)
+      storageSpec: {}
   
-  # Grafana settings
   grafana:
     enabled: true
+    adminPassword: admin
     
-    # Admin credentials
-    adminPassword: admin  # CHANGE THIS!
-    
-    # Persistent storage for dashboards
+    # Disable persistence
     persistence:
-      enabled: true
-      size: 1Gi
+      enabled: false
     
-    # Pre-installed dashboards
     defaultDashboardsEnabled: true
-    
-    # Don't create ingress here, we'll use our ingresses chart
     ingress:
       enabled: false
   
-  # AlertManager settings
   alertmanager:
     enabled: true
+    
+    # Disable alertmanager storage too
+    alertmanagerSpec:
+      storage: {}

@@ -1,25 +1,29 @@
 kube-prometheus-stack:
+  # Prometheus settings
   prometheus:
+    enabled: true  # Explicitly enable
     prometheusSpec:
       retention: 7d
-      # Disable storage - use emptyDir (data lost on pod restart)
+      # No storage - use emptyDir
       storageSpec: {}
+      
+      # Resources
+      resources:
+        requests:
+          memory: 400Mi
   
+  # Grafana settings
   grafana:
     enabled: true
     adminPassword: admin
-    
-    # Disable persistence
     persistence:
       enabled: false
-    
     defaultDashboardsEnabled: true
     ingress:
       enabled: false
   
+  # AlertManager settings
   alertmanager:
     enabled: true
-    
-    # Disable alertmanager storage too
     alertmanagerSpec:
       storage: {}

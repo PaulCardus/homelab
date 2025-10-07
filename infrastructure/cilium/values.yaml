@@ -1,0 +1,21 @@
+cilium:
+  # Enable Hubble for network observability
+  hubble:
+    enabled: true
+    
+    # Hubble Relay - aggregates data from all nodes
+    relay:
+      enabled: true
+      
+    # Hubble UI - web interface
+    ui:
+      enabled: true
+      
+      # Expose via Ingress
+      ingress:
+        enabled: false  # We'll create our own Ingress
+  
+  # Keep your existing settings
+  kubeProxyReplacement: true
+  ipam:
+    mode: kubernetes

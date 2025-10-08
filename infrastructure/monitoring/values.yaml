@@ -1,0 +1,32 @@
+kube-prometheus-stack:
+  # Prometheus settings
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      retention: 10m # keep 10 minutes of data
+      storageSpec: {}  # No persistence
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 250m
+  
+  # Grafana settings
+  grafana:
+    enabled: true
+    adminPassword: admin  # Change this!
+    
+    # NO persistence
+    persistence:
+      enabled: false
+    
+    # Pre-built dashboards
+    defaultDashboardsEnabled: true
+    
+    ingress:
+      enabled: false  # We'll use our own ingress
+  
+  # AlertManager
+  alertmanager:
+    enabled: true
+    alertmanagerSpec:
+      storage: {}  # No persistence

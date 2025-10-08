@@ -2,4 +2,4 @@ ingress-nginx:
   controller:
     service:
       type: LoadBalancer
-      # MetalLB will assign an IP
+      # MetalLB will assign an IP to this ingress controller

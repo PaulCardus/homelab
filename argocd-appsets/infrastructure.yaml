@@ -28,4 +28,5 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
-          - Replace=true  # ✅ This fixes large CRD annotation issue during monitoring app deployment
+          # - Replace=true  # ✅ This fixes large CRD annotation issue during monitoring app deployment
+          # - Force=true  # Force update even if resources exist

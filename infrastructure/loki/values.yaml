@@ -1,0 +1,56 @@
+loki:
+  auth_enabled: false
+  
+  commonConfig:
+    replication_factor: 1
+  
+  storage:
+    type: filesystem
+  
+  # Single binary mode for homelab
+  deploymentMode: SingleBinary
+  
+  singleBinary:
+    replicas: 1
+    
+    # Persistent storage for logs
+    persistence:
+      enabled: true
+      size: 80Gi  # Use 80GB of your 190GB
+      storageClassName: "local-path"  # Use default or specify: local-path is in use because i am creating it using local path provisioner
+    
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+    
+    # Run ONLY on monitoring node
+    tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    
+    nodeSelector:
+      monitoring: "true"
+  
+  # Gateway
+  gateway:
+    enabled: true
+    replicas: 1
+    
+    tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    
+    nodeSelector:
+      monitoring: "true"
+  
+  # Configure retention (optional)
+  limits_config:
+    retention_period: 2d  # Keep logs for 30 days

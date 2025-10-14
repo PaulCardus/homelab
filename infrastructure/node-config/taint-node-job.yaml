@@ -1,18 +1,23 @@
 ---
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: node-tainter
   namespace: monitoring
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: node-tainter
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 rules:
 - apiGroups: [""]
   resources: ["nodes"]
@@ -23,7 +28,7 @@ kind: ClusterRoleBinding
 metadata:
   name: node-tainter
   annotations:
-    argocd.argoproj.io/sync-wave: "-1"
+    argocd.argoproj.io/sync-wave: "-2"
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -41,9 +46,10 @@ metadata:
   annotations:
     argocd.argoproj.io/hook: PreSync
     argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
-    argocd.argoproj.io/sync-wave: "0"
+    argocd.argoproj.io/sync-wave: "-1"
 spec:
-  ttlSecondsAfterFinished: 30
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 3
   template:
     spec:
       serviceAccountName: node-tainter
@@ -56,14 +62,39 @@ spec:
         - -c
         - |
           set -e
-          echo "Tainting and labeling k8s-monitoring-1 node..."
           
-          # Add label
+          echo "Waiting for RBAC to propagate..."
+          sleep 5
+          
+          echo "Checking if node exists..."
+          if ! kubectl get node k8s-monitoring-1 > /dev/null 2>&1; then
+            echo "ERROR: Node k8s-monitoring-1 not found!"
+            exit 1
+          fi
+          
+          echo "Labeling k8s-monitoring-1 node..."
           kubectl label nodes k8s-monitoring-1 monitoring=true --overwrite
           
-          # Add taint
+          echo "Tainting k8s-monitoring-1 node..."
           kubectl taint nodes k8s-monitoring-1 monitoring=true:NoSchedule --overwrite
           
-          echo "Node configured successfully!"
-          kubectl get node k8s-monitoring-1 -o jsonpath='{.spec.taints}' | grep -q "monitoring" && echo "✓ Taint applied" || echo "✗ Taint failed"
-          kubectl get node k8s-monitoring-1 -o jsonpath='{.metadata.labels}' | grep -q "monitoring" && echo "✓ Label applied" || echo "✗ Label failed"
+          echo ""
+          echo "✓ Node configuration completed successfully!"
+          echo ""
+          echo "Verifying configuration..."
+          
+          # Verify label
+          if kubectl get node k8s-monitoring-1 -o jsonpath='{.metadata.labels.monitoring}' | grep -q "true"; then
+            echo "✓ Label 'monitoring=true' applied"
+          else
+            echo "✗ Label failed"
+            exit 1
+          fi
+          
+          # Verify taint
+          if kubectl get node k8s-monitoring-1 -o jsonpath='{.spec.taints[?(@.key=="monitoring")].effect}' | grep -q "NoSchedule"; then
+            echo "✓ Taint 'monitoring=true:NoSchedule' applied"
+          else
+            echo "✗ Taint failed"
+            exit 1
+          fi

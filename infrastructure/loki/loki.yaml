@@ -52,6 +52,7 @@ data:
       retention_period: 720h  # 30 days
       ingestion_rate_mb: 10
       ingestion_burst_size_mb: 20
+      volume_enabled: true  # This enables volume queries in Grafana
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

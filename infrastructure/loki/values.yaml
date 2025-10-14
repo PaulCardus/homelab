@@ -1,4 +1,7 @@
 loki:
+  # Use test schema for quick setup
+  useTestSchema: true
+  
   auth_enabled: false
   
   commonConfig:
@@ -14,17 +17,6 @@ loki:
       chunks_directory: /var/loki/chunks
       rules_directory: /var/loki/rules
   
-  # REQUIRED: Schema configuration
-  schemaConfig:
-    configs:
-    - from: 2024-04-01
-      store: tsdb
-      object_store: filesystem
-      schema: v13
-      index:
-        prefix: loki_index_
-        period: 24h
-  
   # Limits and retention
   limits_config:
     retention_period: 30d
@@ -36,8 +28,6 @@ loki:
     working_directory: /var/loki/compactor
     compaction_interval: 10m
     retention_enabled: true
-    retention_delete_delay: 2h
-    retention_delete_worker_count: 150
   
   # Single binary mode
   deploymentMode: SingleBinary
@@ -45,7 +35,6 @@ loki:
   singleBinary:
     replicas: 1
     
-    # Persistent storage
     persistence:
       enabled: true
       size: 80Gi
@@ -59,7 +48,6 @@ loki:
         memory: 2Gi
         cpu: 1000m
     
-    # Run ONLY on monitoring node
     tolerations:
     - key: "monitoring"
       operator: "Equal"
@@ -69,7 +57,6 @@ loki:
     nodeSelector:
       monitoring: "true"
   
-  # Disable other components (single binary mode)
   backend:
     replicas: 0
   read:
@@ -77,18 +64,9 @@ loki:
   write:
     replicas: 0
   
-  # Gateway
   gateway:
     enabled: true
     replicas: 1
-    
-    resources:
-      requests:
-        memory: 128Mi
-        cpu: 100m
-      limits:
-        memory: 256Mi
-        cpu: 200m
     
     tolerations:
     - key: "monitoring"
@@ -99,7 +77,6 @@ loki:
     nodeSelector:
       monitoring: "true"
 
-# Disable monitoring features
 monitoring:
   selfMonitoring:
     enabled: false
@@ -108,10 +85,5 @@ monitoring:
   lokiCanary:
     enabled: false
 
-# Disable test
 test:
   enabled: false
-
-# Disable tracing
-tracing:
-  jaegerAgentHost: ""

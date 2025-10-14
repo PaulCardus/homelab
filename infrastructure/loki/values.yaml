@@ -14,6 +14,7 @@ loki:
       chunks_directory: /var/loki/chunks
       rules_directory: /var/loki/rules
   
+  # REQUIRED: Schema configuration
   schemaConfig:
     configs:
     - from: 2024-04-01
@@ -24,29 +25,31 @@ loki:
         prefix: loki_index_
         period: 24h
   
+  # Limits and retention
   limits_config:
     retention_period: 30d
-    allow_structured_metadata: true
-    volume_enabled: true
+    ingestion_rate_mb: 10
+    ingestion_burst_size_mb: 20
   
-  # Single binary mode for homelab
+  # Compactor for retention
+  compactor:
+    working_directory: /var/loki/compactor
+    compaction_interval: 10m
+    retention_enabled: true
+    retention_delete_delay: 2h
+    retention_delete_worker_count: 150
+  
+  # Single binary mode
   deploymentMode: SingleBinary
-  
-  loki:
-    auth_enabled: false
-    commonConfig:
-      replication_factor: 1
-    storage:
-      type: filesystem
   
   singleBinary:
     replicas: 1
     
-    # Persistent storage for logs
+    # Persistent storage
     persistence:
       enabled: true
       size: 80Gi
-      storageClassName: "local-path"  # deployed by local-path-provisioner chart
+      storageClassName: "local-path"
     
     resources:
       requests:
@@ -66,7 +69,7 @@ loki:
     nodeSelector:
       monitoring: "true"
   
-  # Disable other components for single binary mode
+  # Disable other components (single binary mode)
   backend:
     replicas: 0
   read:
@@ -79,6 +82,14 @@ loki:
     enabled: true
     replicas: 1
     
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 200m
+    
     tolerations:
     - key: "monitoring"
       operator: "Equal"
@@ -88,9 +99,7 @@ loki:
     nodeSelector:
       monitoring: "true"
 
-# Disable features we don't need
-test:
-  enabled: false
+# Disable monitoring features
 monitoring:
   selfMonitoring:
     enabled: false
@@ -98,3 +107,11 @@ monitoring:
       installOperator: false
   lokiCanary:
     enabled: false
+
+# Disable test
+test:
+  enabled: false
+
+# Disable tracing
+tracing:
+  jaegerAgentHost: ""

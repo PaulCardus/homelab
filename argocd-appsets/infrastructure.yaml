@@ -29,8 +29,8 @@ spec:
         syncOptions:
           - ServerSideApply=false  # Add this line to disable server-side apply
           - CreateNamespace=true
-            {{- if eq (path.basename) "monitoring" }}
-            - SkipCRD=true
-            {{- end }}
+            # {{- if eq (path.basename) "monitoring" }}
+            # - SkipCRD=true
+            # {{- end }}
           # - Replace=true  # ✅ This fixes large CRD annotation issue during monitoring app deployment
           # - Force=true  # Force update even if resources exist

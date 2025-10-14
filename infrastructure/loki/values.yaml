@@ -6,9 +6,38 @@ loki:
   
   storage:
     type: filesystem
+    bucketNames:
+      chunks: chunks
+      ruler: ruler
+      admin: admin
+    filesystem:
+      chunks_directory: /var/loki/chunks
+      rules_directory: /var/loki/rules
+  
+  schemaConfig:
+    configs:
+    - from: 2024-04-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: loki_index_
+        period: 24h
+  
+  limits_config:
+    retention_period: 30d
+    allow_structured_metadata: true
+    volume_enabled: true
   
   # Single binary mode for homelab
   deploymentMode: SingleBinary
+  
+  loki:
+    auth_enabled: false
+    commonConfig:
+      replication_factor: 1
+    storage:
+      type: filesystem
   
   singleBinary:
     replicas: 1
@@ -16,8 +45,8 @@ loki:
     # Persistent storage for logs
     persistence:
       enabled: true
-      size: 80Gi  # Use 80GB of your 190GB
-      storageClassName: "local-path"  # Use default or specify: local-path is in use because i am creating it using local path provisioner
+      size: 80Gi
+      storageClassName: "local-path"  # deployed by local-path-provisioner chart
     
     resources:
       requests:
@@ -37,6 +66,14 @@ loki:
     nodeSelector:
       monitoring: "true"
   
+  # Disable other components for single binary mode
+  backend:
+    replicas: 0
+  read:
+    replicas: 0
+  write:
+    replicas: 0
+  
   # Gateway
   gateway:
     enabled: true
@@ -50,7 +87,14 @@ loki:
     
     nodeSelector:
       monitoring: "true"
-  
-  # Configure retention (optional)
-  limits_config:
-    retention_period: 2d  # Keep logs for 30 days
+
+# Disable features we don't need
+test:
+  enabled: false
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    enabled: false

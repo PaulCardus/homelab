@@ -6,4 +6,4 @@ version: 1.0.0
 dependencies:
 - name: local-path-provisioner
   version: "0.1.2"
-  repository: https://charts.rancher.io
+  repository: https://charts.rancher.io/

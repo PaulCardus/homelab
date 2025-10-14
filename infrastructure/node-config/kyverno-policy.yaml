@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-monitoring-node-taint
+spec:
+  background: true
+  rules:
+  - name: taint-monitoring-node
+    match:
+      any:
+      - resources:
+          kinds:
+          - Node
+          names:
+          - k8s-monitoring-1
+    mutate:
+      patchStrategicMerge:
+        spec:
+          taints:
+          - key: monitoring
+            value: "true"
+            effect: NoSchedule
+        metadata:
+          labels:
+            monitoring: "true"

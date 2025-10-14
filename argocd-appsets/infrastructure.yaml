@@ -27,6 +27,7 @@ spec:
           prune: true
           selfHeal: true
         syncOptions:
+          - ServerSideApply=false  # Add this line to disable server-side apply
           - CreateNamespace=true
             {{- if eq (path.basename) "monitoring" }}
             - SkipCRD=true

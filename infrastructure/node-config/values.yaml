@@ -1,8 +1,0 @@
-kyverno:
-  replicas: 1
-  resources:
-    limits:
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 256Mi

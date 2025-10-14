@@ -9,6 +9,15 @@ kube-prometheus-stack:
         requests:
           memory: 512Mi
           cpu: 250m
+
+    tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    
+    nodeSelector:
+      monitoring: "true"
   
   # Grafana settings
   grafana:
@@ -24,9 +33,27 @@ kube-prometheus-stack:
     
     ingress:
       enabled: false  # We'll use our own ingress
+
+    tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    
+    nodeSelector:
+      monitoring: "true"
   
   # AlertManager
   alertmanager:
     enabled: true
     alertmanagerSpec:
       storage: {}  # No persistence
+
+    tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+    
+    nodeSelector:
+      monitoring: "true"

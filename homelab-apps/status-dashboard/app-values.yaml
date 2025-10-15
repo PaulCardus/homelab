@@ -4,6 +4,20 @@ fullnameOverride: "status-dashboard"
 
 replicaCount: 1
 
+image:
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
 service:
   type: ClusterIP
   port: 80
@@ -35,3 +49,24 @@ securityContext:
 
 podSecurityContext:
   runAsNonRoot: true
+
+# Additional volumes
+volumes: []
+
+# Additional volume mounts
+volumeMounts: []
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity rules
+affinity: {}
+
+# Environment variables
+env: []
+
+# Environment variables from ConfigMaps or Secrets
+envFrom: []

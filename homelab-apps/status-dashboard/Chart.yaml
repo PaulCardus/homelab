@@ -5,12 +5,12 @@ type: application
 version: 1.0.0
 appVersion: "1.0.0"
 
-# Dependency on your homelab-helm-chart
+# Dependency on your homelab-helm-chart from GitHub Pages
 dependencies:
 - name: homelab-app
   version: "1.0.0"  # Explicit version of your base chart
-  repository: "https://github.com/PaulCardus/homelab-helm-chart"
-  
+  repository: "oci://registry-1.docker.io/cardus4002"
+
 keywords:
 - homelab
 - dashboard

@@ -21,8 +21,7 @@ spec:
         path: '{{path}}'
         helm:
           valueFiles:
-          - app-values.yaml
-          - infra-values.yaml
+          - values.yaml
       destination:
         server: https://kubernetes.default.svc
         namespace: '{{path.basename}}'

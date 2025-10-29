@@ -8,14 +8,12 @@ eck-operator:
       memory: 150Mi
   installCRDs: true
   
-  # Tolerate monitoring node
   tolerations:
     - key: "monitoring"
       operator: "Equal"
       value: "true"
       effect: "NoSchedule"
   
-  # Run on monitoring node
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -32,8 +30,9 @@ eck-stack:
     version: 8.15.0
     fullnameOverride: homelab-es
     
-    annotations:
-      eck.k8s.elastic.co/downward-node-labels: "topology.kubernetes.io/zone"
+    # Remove this line for homelab
+    # annotations:
+    #   eck.k8s.elastic.co/downward-node-labels: "topology.kubernetes.io/zone"
     
     nodeSets:
       - name: default
@@ -41,10 +40,12 @@ eck-stack:
         config:
           node.store.allow_mmap: false
           node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
+          # Remove zone-related configs for homelab
+          # cluster.routing.allocation.awareness.attributes: k8s_node_name,zone
+          # node.attr.zone: ${ZONE}
         
         podTemplate:
           spec:
-            # Schedule on monitoring node
             nodeSelector:
               monitoring: "true"
             
@@ -66,6 +67,11 @@ eck-stack:
                 env:
                   - name: ES_JAVA_OPTS
                     value: "-Xms2g -Xmx2g"
+                  # Remove ZONE env var
+                  # - name: ZONE
+                  #   valueFrom:
+                  #     fieldRef:
+                  #       fieldPath: metadata.annotations['topology.kubernetes.io/zone']
         
         volumeClaimTemplates:
           - metadata:
@@ -88,7 +94,6 @@ eck-stack:
     
     podTemplate:
       spec:
-        # Schedule on monitoring node
         nodeSelector:
           monitoring: "true"
         
@@ -116,10 +121,9 @@ eck-stack:
         selfSignedCertificate:
           disabled: false
     
-    # Ingress for kibana.homelab.local
     ingress:
       enabled: true
-      className: nginx  # or whatever ingress controller you use
+      className: nginx
       annotations:
         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         nginx.ingress.kubernetes.io/ssl-passthrough: "false"
@@ -132,7 +136,6 @@ eck-stack:
               port:
                 number: 5601
 
-  # Filebeat for log collection
   eck-beats:
     enabled: true
     version: 8.15.0
@@ -211,7 +214,6 @@ eck-stack:
             dnsPolicy: ClusterFirstWithHostNet
             hostNetwork: true
             
-            # Filebeat runs on ALL nodes (no nodeSelector)
             tolerations:
               - key: "monitoring"
                 operator: "Equal"

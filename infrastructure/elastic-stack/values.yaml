@@ -30,7 +30,6 @@ eck-stack:
     enabled: true
     fullnameOverride: homelab-es
     
-    # This is the key - the spec section
     spec:
       version: 8.15.0
       nodeSets:
@@ -116,7 +115,6 @@ eck-stack:
           selfSignedCertificate:
             disabled: false
     
-    # Ingress is outside spec
     ingress:
       enabled: true
       className: nginx
@@ -127,7 +125,7 @@ eck-stack:
         - host: kibana.homelab.local
           path: /
 
-  # Filebeat configuration
+  # Filebeat configuration - runs on ALL nodes
   eck-beats:
     enabled: true
     fullnameOverride: homelab-filebeat
@@ -207,10 +205,19 @@ eck-stack:
             dnsPolicy: ClusterFirstWithHostNet
             hostNetwork: true
             
+            # Remove nodeSelector - run on all nodes
+            # Add tolerations for all node types
             tolerations:
               - key: "monitoring"
                 operator: "Equal"
                 value: "true"
+                effect: "NoSchedule"
+              # Tolerate master node taints if any
+              - key: "node-role.kubernetes.io/control-plane"
+                operator: "Exists"
+                effect: "NoSchedule"
+              - key: "node-role.kubernetes.io/master"
+                operator: "Exists"
                 effect: "NoSchedule"
             
             containers:

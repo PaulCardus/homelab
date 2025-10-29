@@ -30,19 +30,12 @@ eck-stack:
     version: 8.15.0
     fullnameOverride: homelab-es
     
-    # Remove this line for homelab
-    # annotations:
-    #   eck.k8s.elastic.co/downward-node-labels: "topology.kubernetes.io/zone"
-    
     nodeSets:
       - name: default
         count: 1
         config:
           node.store.allow_mmap: false
           node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
-          # Remove zone-related configs for homelab
-          # cluster.routing.allocation.awareness.attributes: k8s_node_name,zone
-          # node.attr.zone: ${ZONE}
         
         podTemplate:
           spec:
@@ -67,11 +60,6 @@ eck-stack:
                 env:
                   - name: ES_JAVA_OPTS
                     value: "-Xms2g -Xmx2g"
-                  # Remove ZONE env var
-                  # - name: ZONE
-                  #   valueFrom:
-                  #     fieldRef:
-                  #       fieldPath: metadata.annotations['topology.kubernetes.io/zone']
         
         volumeClaimTemplates:
           - metadata:
@@ -90,7 +78,7 @@ eck-stack:
     fullnameOverride: homelab-kb
     
     elasticsearchRef:
-      name: homelab-es
+      name: homelab-es  # ✅ Fixed - matches the Elasticsearch name
     
     podTemplate:
       spec:
@@ -186,9 +174,9 @@ eck-stack:
     spec:
       type: filebeat
       elasticsearchRef:
-        name: homelab-es
+        name: homelab-es  # ✅ Already correct
       kibanaRef:
-        name: homelab-kb
+        name: homelab-kb  # ✅ Already correct
       
       config:
         filebeat.autodiscover:

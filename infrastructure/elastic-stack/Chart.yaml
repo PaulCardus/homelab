@@ -1,0 +1,17 @@
+apiVersion: v2
+name: elastic-stack
+version: 1.0.0
+dependencies:
+  - name: eck-elasticsearch
+    version: 0.12.0
+    repository: https://helm.elastic.co
+    condition: elasticsearch.enabled
+  - name: eck-kibana
+    version: 0.12.0
+    repository: https://helm.elastic.co
+    condition: kibana.enabled
+  - name: eck-beat
+    version: 0.12.0
+    repository: https://helm.elastic.co
+    condition: filebeat.enabled
+    alias: filebeat

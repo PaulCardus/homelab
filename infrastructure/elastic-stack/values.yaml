@@ -1,207 +1,257 @@
-elasticsearch:
-  enabled: true
+eck-operator:
+  resources:
+    limits:
+      cpu: 1
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 150Mi
+  installCRDs: true
+  
+  # Tolerate monitoring node
+  tolerations:
+    - key: "monitoring"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+  
+  # Run on monitoring node
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: monitoring
+                operator: In
+                values:
+                  - "true"
 
-eck-elasticsearch:
-  fullnameOverride: homelab-es
-  
-  version: 8.15.0
-  
-  nodeSets:
-    - name: default
-      count: 1
-      config:
-        node.store.allow_mmap: false
-      
-      podTemplate:
-        spec:
-          # Schedule on monitoring node
-          nodeSelector:
-            monitoring: "true"
-          
-          tolerations:
-            - key: "monitoring"
-              operator: "Equal"
-              value: "true"
-              effect: "NoSchedule"
-          
-          containers:
-            - name: elasticsearch
+eck-stack:
+  eck-elasticsearch:
+    enabled: true
+    version: 8.15.0
+    fullnameOverride: homelab-es
+    
+    annotations:
+      eck.k8s.elastic.co/downward-node-labels: "topology.kubernetes.io/zone"
+    
+    nodeSets:
+      - name: default
+        count: 1
+        config:
+          node.store.allow_mmap: false
+          node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
+        
+        podTemplate:
+          spec:
+            # Schedule on monitoring node
+            nodeSelector:
+              monitoring: "true"
+            
+            tolerations:
+              - key: "monitoring"
+                operator: "Equal"
+                value: "true"
+                effect: "NoSchedule"
+            
+            containers:
+              - name: elasticsearch
+                resources:
+                  requests:
+                    memory: 4Gi
+                    cpu: 1
+                  limits:
+                    memory: 8Gi
+                    cpu: 3
+                env:
+                  - name: ES_JAVA_OPTS
+                    value: "-Xms2g -Xmx2g"
+        
+        volumeClaimTemplates:
+          - metadata:
+              name: elasticsearch-data
+            spec:
+              accessModes:
+                - ReadWriteOnce
+              storageClassName: local-path
               resources:
                 requests:
-                  memory: 4Gi
-                  cpu: 1
-                limits:
-                  memory: 8Gi
-                  cpu: 3
-              env:
-                - name: ES_JAVA_OPTS
-                  value: "-Xms2g -Xmx2g"  # Increased for 12GB RAM node
-      
-      volumeClaimTemplates:
-        - metadata:
-            name: elasticsearch-data
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            storageClassName: local-path  # Your default storage class
-            resources:
-              requests:
-                storage: 50Gi  # Adjust based on your needs (you have 200GB disk)
+                  storage: 50Gi
 
-kibana:
-  enabled: true
-
-eck-kibana:
-  fullnameOverride: homelab-kb
-  
-  version: 8.15.0
-  count: 1
-  
-  elasticsearchRef:
-    name: homelab-es
-  
-  podTemplate:
-    spec:
-      # Schedule on monitoring node
-      nodeSelector:
-        monitoring: "true"
-      
-      tolerations:
-        - key: "monitoring"
-          operator: "Equal"
-          value: "true"
-          effect: "NoSchedule"
-      
-      containers:
-        - name: kibana
-          resources:
-            requests:
-              memory: 1Gi
-              cpu: 500m
-            limits:
-              memory: 2Gi
-              cpu: 1
-  
-  http:
-    service:
-      spec:
-        type: ClusterIP
-    tls:
-      selfSignedCertificate:
-        disabled: false
-
-# Filebeat for log collection across all nodes
-filebeat:
-  enabled: true
-
-eck-beat:
-  fullnameOverride: homelab-filebeat
-  
-  version: 8.15.0
-  
-  type: filebeat
-  
-  daemonSet:
+  eck-kibana:
+    enabled: true
+    version: 8.15.0
+    fullnameOverride: homelab-kb
+    
+    elasticsearchRef:
+      name: homelab-es
+    
     podTemplate:
       spec:
-        serviceAccountName: filebeat
-        automountServiceAccountToken: true
-        dnsPolicy: ClusterFirstWithHostNet
-        hostNetwork: true
+        # Schedule on monitoring node
+        nodeSelector:
+          monitoring: "true"
         
-        # Filebeat runs on ALL nodes (no nodeSelector)
         tolerations:
-          - effect: NoSchedule
-            key: monitoring
-            operator: Equal
+          - key: "monitoring"
+            operator: "Equal"
             value: "true"
+            effect: "NoSchedule"
         
         containers:
-          - name: filebeat
+          - name: kibana
             resources:
               requests:
-                memory: 200Mi
-                cpu: 100m
+                memory: 1Gi
+                cpu: 500m
               limits:
-                memory: 400Mi
-                cpu: 200m
-            securityContext:
-              runAsUser: 0
-            volumeMounts:
-              - name: varlogcontainers
-                mountPath: /var/log/containers
-                readOnly: true
-              - name: varlogpods
-                mountPath: /var/log/pods
-                readOnly: true
-              - name: varlibdockercontainers
-                mountPath: /var/lib/docker/containers
-                readOnly: true
-        
-        volumes:
-          - name: varlogcontainers
-            hostPath:
-              path: /var/log/containers
-          - name: varlogpods
-            hostPath:
-              path: /var/log/pods
-          - name: varlibdockercontainers
-            hostPath:
-              path: /var/lib/docker/containers
-  
-  config:
-    filebeat.inputs:
-      - type: container
-        paths:
-          - /var/log/containers/*.log
-        processors:
-          - add_kubernetes_metadata:
-              host: ${NODE_NAME}
-              matchers:
-                - logs_path:
-                    logs_path: "/var/log/containers/"
+                memory: 2Gi
+                cpu: 1
     
-    output.elasticsearch:
-      hosts: ["https://homelab-es-http.elastic-stack.svc:9200"]
-      username: elastic
-      password: ${ELASTICSEARCH_PASSWORD}
-      ssl.certificate_authorities: ["/mnt/elastic-internal/http-certs/ca.crt"]
-  
-  elasticsearchRef:
-    name: homelab-es
+    http:
+      service:
+        spec:
+          type: ClusterIP
+      tls:
+        selfSignedCertificate:
+          disabled: false
+    
+    # Ingress for kibana.homelab.local
+    ingress:
+      enabled: true
+      className: nginx  # or whatever ingress controller you use
+      annotations:
+        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        nginx.ingress.kubernetes.io/ssl-passthrough: "false"
+      hosts:
+        - host: kibana.homelab.local
+          path: /
+          backend:
+            service:
+              name: homelab-kb-http
+              port:
+                number: 5601
 
----
-# ServiceAccount for Filebeat
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: filebeat
-  namespace: elastic-stack
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: filebeat
-rules:
-- apiGroups: [""]
-  resources:
-    - namespaces
-    - pods
-    - nodes
-  verbs:
-    - get
-    - watch
-    - list
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: filebeat
-subjects:
-- kind: ServiceAccount
-  name: filebeat
-  namespace: elastic-stack
-roleRef:
-  kind: ClusterRole
-  name: filebeat
-  apiGroup: rbac.authorization.k8s.io
+  # Filebeat for log collection
+  eck-beats:
+    enabled: true
+    version: 8.15.0
+    fullnameOverride: homelab-filebeat
+    
+    serviceAccount:
+      name: filebeat
+    
+    clusterRoleBinding:
+      name: filebeat-autodiscover-binding
+      subjects:
+        - kind: ServiceAccount
+          name: filebeat
+          namespace: elastic-stack
+      roleRef:
+        kind: ClusterRole
+        name: filebeat-autodiscover
+        apiGroup: rbac.authorization.k8s.io
+    
+    clusterRole:
+      name: filebeat-autodiscover
+      rules:
+        - apiGroups: [""]
+          resources:
+            - nodes
+            - namespaces
+            - events
+            - pods
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups: ["apps"]
+          resources:
+            - replicasets
+          verbs:
+            - get
+            - list
+            - watch
+        - apiGroups: ["batch"]
+          resources:
+            - jobs
+          verbs:
+            - get
+            - list
+            - watch
+    
+    spec:
+      type: filebeat
+      elasticsearchRef:
+        name: homelab-es
+      kibanaRef:
+        name: homelab-kb
+      
+      config:
+        filebeat.autodiscover:
+          providers:
+            - type: kubernetes
+              node: ${NODE_NAME}
+              hints.enabled: true
+              hints.default_config:
+                type: container
+                paths:
+                  - /var/log/containers/*-${data.kubernetes.container.id}.log
+        
+        processors:
+          - add_cloud_metadata: {}
+          - add_host_metadata: {}
+      
+      daemonSet:
+        podTemplate:
+          spec:
+            serviceAccountName: filebeat
+            automountServiceAccountToken: true
+            terminationGracePeriodSeconds: 30
+            dnsPolicy: ClusterFirstWithHostNet
+            hostNetwork: true
+            
+            # Filebeat runs on ALL nodes (no nodeSelector)
+            tolerations:
+              - key: "monitoring"
+                operator: "Equal"
+                value: "true"
+                effect: "NoSchedule"
+            
+            containers:
+              - name: filebeat
+                securityContext:
+                  runAsUser: 0
+                volumeMounts:
+                  - name: varlogcontainers
+                    mountPath: /var/log/containers
+                    readOnly: true
+                  - name: varlogpods
+                    mountPath: /var/log/pods
+                    readOnly: true
+                  - name: varlibdockercontainers
+                    mountPath: /var/lib/docker/containers
+                    readOnly: true
+                env:
+                  - name: NODE_NAME
+                    valueFrom:
+                      fieldRef:
+                        fieldPath: spec.nodeName
+                resources:
+                  requests:
+                    memory: 200Mi
+                    cpu: 100m
+                  limits:
+                    memory: 400Mi
+                    cpu: 200m
+            
+            volumes:
+              - name: varlogcontainers
+                hostPath:
+                  path: /var/log/containers
+              - name: varlogpods
+                hostPath:
+                  path: /var/log/pods
+              - name: varlibdockercontainers
+                hostPath:
+                  path: /var/lib/docker/containers

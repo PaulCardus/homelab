@@ -126,131 +126,132 @@ eck-stack:
         - host: kibana.homelab.local
           path: /
 
-  eck-beats:  # <-- This needs to be indented under eck-stack
-    enabled: true
-    fullnameOverride: homelab-filebeat
-    version: 8.15.0
-    type: filebeat
-    
-    serviceAccount:
-      name: filebeat
-    
-    clusterRoleBinding:
-      name: filebeat-autodiscover-binding
-      subjects:
-        - kind: ServiceAccount
-          name: filebeat
-          namespace: elastic-stack
-      roleRef:
-        kind: ClusterRole
+  eck-beats:
+      enabled: true
+      fullnameOverride: homelab-filebeat
+      version: 8.15.0
+      
+      serviceAccount:
+        name: filebeat
+      
+      clusterRoleBinding:
+        name: filebeat-autodiscover-binding
+        subjects:
+          - kind: ServiceAccount
+            name: filebeat
+            namespace: elastic-stack
+        roleRef:
+          kind: ClusterRole
+          name: filebeat-autodiscover
+          apiGroup: rbac.authorization.k8s.io
+      
+      clusterRole:
         name: filebeat-autodiscover
-        apiGroup: rbac.authorization.k8s.io
-    
-    clusterRole:
-      name: filebeat-autodiscover
-      rules:
-        - apiGroups: [""]
-          resources:
-            - nodes
-            - namespaces
-            - events
-            - pods
-          verbs:
-            - get
-            - list
-            - watch
-        - apiGroups: ["apps"]
-          resources:
-            - replicasets
-          verbs:
-            - get
-            - list
-            - watch
-        - apiGroups: ["batch"]
-          resources:
-            - jobs
-          verbs:
-            - get
-            - list
-            - watch
-    
-    # spec section for Beat CRD
-    spec:
-      elasticsearchRef:
-        name: homelab-es
-      kibanaRef:
-        name: homelab-kb
+        rules:
+          - apiGroups: [""]
+            resources:
+              - nodes
+              - namespaces
+              - events
+              - pods
+            verbs:
+              - get
+              - list
+              - watch
+          - apiGroups: ["apps"]
+            resources:
+              - replicasets
+            verbs:
+              - get
+              - list
+              - watch
+          - apiGroups: ["batch"]
+            resources:
+              - jobs
+            verbs:
+              - get
+              - list
+              - watch
       
-      config:
-        filebeat.autodiscover:
-          providers:
-            - type: kubernetes
-              node: ${NODE_NAME}
-              hints.enabled: true
-              hints.default_config:
-                type: container
-                paths:
-                  - /var/log/containers/*-${data.kubernetes.container.id}.log
+      # spec section for Beat CRD
+      spec:
+        type: filebeat  # <-- Move type here
         
-        processors:
-          - add_cloud_metadata: {}
-          - add_host_metadata: {}
-      
-      daemonSet:
-        podTemplate:
-          spec:
-            serviceAccountName: filebeat
-            automountServiceAccountToken: true
-            terminationGracePeriodSeconds: 30
-            dnsPolicy: ClusterFirstWithHostNet
-            hostNetwork: true
-            
-            tolerations:
-              - key: "monitoring"
-                operator: "Equal"
-                value: "true"
-                effect: "NoSchedule"
-              - key: "node-role.kubernetes.io/control-plane"
-                operator: "Exists"
-                effect: "NoSchedule"
-              - key: "node-role.kubernetes.io/master"
-                operator: "Exists"
-                effect: "NoSchedule"
-            
-            containers:
-              - name: filebeat
-                securityContext:
-                  runAsUser: 0
-                volumeMounts:
-                  - name: varlogcontainers
-                    mountPath: /var/log/containers
-                    readOnly: true
-                  - name: varlogpods
-                    mountPath: /var/log/pods
-                    readOnly: true
-                  - name: varlibdockercontainers
-                    mountPath: /var/lib/docker/containers
-                    readOnly: true
-                env:
-                  - name: NODE_NAME
-                    valueFrom:
-                      fieldRef:
-                        fieldPath: spec.nodeName
-                resources:
-                  requests:
-                    memory: 200Mi
-                    cpu: 100m
-                  limits:
-                    memory: 400Mi
-                    cpu: 200m
-            
-            volumes:
-              - name: varlogcontainers
-                hostPath:
-                  path: /var/log/containers
-              - name: varlogpods
-                hostPath:
-                  path: /var/log/pods
-              - name: varlibdockercontainers
-                hostPath:
-                  path: /var/lib/docker/containers
+        elasticsearchRef:
+          name: homelab-es
+        kibanaRef:
+          name: homelab-kb
+        
+        config:
+          filebeat.autodiscover:
+            providers:
+              - type: kubernetes
+                node: ${NODE_NAME}
+                hints.enabled: true
+                hints.default_config:
+                  type: container
+                  paths:
+                    - /var/log/containers/*-${data.kubernetes.container.id}.log
+          
+          processors:
+            - add_cloud_metadata: {}
+            - add_host_metadata: {}
+        
+        daemonSet:
+          podTemplate:
+            spec:
+              serviceAccountName: filebeat
+              automountServiceAccountToken: true
+              terminationGracePeriodSeconds: 30
+              dnsPolicy: ClusterFirstWithHostNet
+              hostNetwork: true
+              
+              tolerations:
+                - key: "monitoring"
+                  operator: "Equal"
+                  value: "true"
+                  effect: "NoSchedule"
+                - key: "node-role.kubernetes.io/control-plane"
+                  operator: "Exists"
+                  effect: "NoSchedule"
+                - key: "node-role.kubernetes.io/master"
+                  operator: "Exists"
+                  effect: "NoSchedule"
+              
+              containers:
+                - name: filebeat
+                  securityContext:
+                    runAsUser: 0
+                  volumeMounts:
+                    - name: varlogcontainers
+                      mountPath: /var/log/containers
+                      readOnly: true
+                    - name: varlogpods
+                      mountPath: /var/log/pods
+                      readOnly: true
+                    - name: varlibdockercontainers
+                      mountPath: /var/lib/docker/containers
+                      readOnly: true
+                  env:
+                    - name: NODE_NAME
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: spec.nodeName
+                  resources:
+                    requests:
+                      memory: 200Mi
+                      cpu: 100m
+                    limits:
+                      memory: 400Mi
+                      cpu: 200m
+              
+              volumes:
+                - name: varlogcontainers
+                  hostPath:
+                    path: /var/log/containers
+                - name: varlogpods
+                  hostPath:
+                    path: /var/log/pods
+                - name: varlibdockercontainers
+                  hostPath:
+                    path: /var/lib/docker/containers

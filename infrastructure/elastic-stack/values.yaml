@@ -25,90 +25,98 @@ eck-operator:
                   - "true"
 
 eck-stack:
+  # Elasticsearch configuration
   eck-elasticsearch:
     enabled: true
-    version: 8.15.0
     fullnameOverride: homelab-es
     
-    nodeSets:
-      - name: default
-        count: 1
-        config:
-          node.store.allow_mmap: false
-          node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
-        
-        podTemplate:
-          spec:
-            nodeSelector:
-              monitoring: "true"
-            
-            tolerations:
-              - key: "monitoring"
-                operator: "Equal"
-                value: "true"
-                effect: "NoSchedule"
-            
-            containers:
-              - name: elasticsearch
+    # This is the key - the spec section
+    spec:
+      version: 8.15.0
+      nodeSets:
+        - name: default
+          count: 1
+          config:
+            node.store.allow_mmap: false
+            node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
+          
+          podTemplate:
+            spec:
+              nodeSelector:
+                monitoring: "true"
+              
+              tolerations:
+                - key: "monitoring"
+                  operator: "Equal"
+                  value: "true"
+                  effect: "NoSchedule"
+              
+              containers:
+                - name: elasticsearch
+                  resources:
+                    requests:
+                      memory: 4Gi
+                      cpu: 1
+                    limits:
+                      memory: 8Gi
+                      cpu: 3
+                  env:
+                    - name: ES_JAVA_OPTS
+                      value: "-Xms2g -Xmx2g"
+          
+          volumeClaimTemplates:
+            - metadata:
+                name: elasticsearch-data
+              spec:
+                accessModes:
+                  - ReadWriteOnce
+                storageClassName: local-path
                 resources:
                   requests:
-                    memory: 4Gi
-                    cpu: 1
-                  limits:
-                    memory: 8Gi
-                    cpu: 3
-                env:
-                  - name: ES_JAVA_OPTS
-                    value: "-Xms2g -Xmx2g"
-        
-        volumeClaimTemplates:
-          - metadata:
-              name: elasticsearch-data
-            spec:
-              accessModes:
-                - ReadWriteOnce
-              storageClassName: local-path
-              resources:
-                requests:
-                  storage: 50Gi
+                    storage: 50Gi
 
+  # Kibana configuration  
   eck-kibana:
     enabled: true
-    version: 8.15.0
     fullnameOverride: homelab-kb
     
-    elasticsearchRef:
-      name: homelab-es  # ✅ Fixed - matches the Elasticsearch name
-    
-    podTemplate:
-      spec:
-        nodeSelector:
-          monitoring: "true"
-        
-        tolerations:
-          - key: "monitoring"
-            operator: "Equal"
-            value: "true"
-            effect: "NoSchedule"
-        
-        containers:
-          - name: kibana
-            resources:
-              requests:
-                memory: 1Gi
-                cpu: 500m
-              limits:
-                memory: 2Gi
-                cpu: 1
-    
-    http:
-      service:
+    spec:
+      version: 8.15.0
+      count: 1
+      
+      elasticsearchRef:
+        name: homelab-es
+      
+      podTemplate:
         spec:
-          type: ClusterIP
-      tls:
-        selfSignedCertificate:
-          disabled: false
+          nodeSelector:
+            monitoring: "true"
+          
+          tolerations:
+            - key: "monitoring"
+              operator: "Equal"
+              value: "true"
+              effect: "NoSchedule"
+          
+          containers:
+            - name: kibana
+              resources:
+                requests:
+                  memory: 1Gi
+                  cpu: 500m
+                limits:
+                  memory: 2Gi
+                  cpu: 1
+      
+      http:
+        service:
+          spec:
+            type: ClusterIP
+        tls:
+          selfSignedCertificate:
+            disabled: false
     
+    # Ingress is outside spec
     ingress:
       enabled: true
       className: nginx
@@ -118,15 +126,10 @@ eck-stack:
       hosts:
         - host: kibana.homelab.local
           path: /
-          backend:
-            service:
-              name: homelab-kb-http
-              port:
-                number: 5601
 
+  # Filebeat configuration
   eck-beats:
     enabled: true
-    version: 8.15.0
     fullnameOverride: homelab-filebeat
     
     serviceAccount:
@@ -173,10 +176,12 @@ eck-stack:
     
     spec:
       type: filebeat
+      version: 8.15.0
+      
       elasticsearchRef:
-        name: homelab-es  # ✅ Already correct
+        name: homelab-es
       kibanaRef:
-        name: homelab-kb  # ✅ Already correct
+        name: homelab-kb
       
       config:
         filebeat.autodiscover:

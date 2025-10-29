@@ -28,29 +28,31 @@ eck-stack:
   eck-elasticsearch:
     enabled: true
     fullnameOverride: homelab-es
-    
-    # Direct resource spec (not wrapped in spec:)
     version: 8.15.0
     
+    # nodeSets is at root level, NOT under spec
     nodeSets:
       - name: default
         count: 1
         
         config:
           node.store.allow_mmap: false
-          node.roles: ["master", "data", "ingest", "ml", "remote_cluster_client", "transform"]
         
+        # podTemplate.spec matches Kubernetes PodTemplateSpec exactly
         podTemplate:
           spec:
+            # NodeSelector goes directly in spec
             nodeSelector:
               monitoring: "true"
             
+            # Tolerations go directly in spec
             tolerations:
               - key: "monitoring"
                 operator: "Equal"
                 value: "true"
                 effect: "NoSchedule"
             
+            # Containers array
             containers:
               - name: elasticsearch
                 resources:
@@ -64,6 +66,7 @@ eck-stack:
                   - name: ES_JAVA_OPTS
                     value: "-Xms2g -Xmx2g"
         
+        # volumeClaimTemplates at nodeSets level
         volumeClaimTemplates:
           - metadata:
               name: elasticsearch-data
@@ -78,7 +81,6 @@ eck-stack:
   eck-kibana:
     enabled: true
     fullnameOverride: homelab-kb
-    
     version: 8.15.0
     count: 1
     
@@ -127,6 +129,8 @@ eck-stack:
   eck-beats:
     enabled: true
     fullnameOverride: homelab-filebeat
+    version: 8.15.0
+    type: filebeat
     
     serviceAccount:
       name: filebeat
@@ -169,9 +173,6 @@ eck-stack:
             - get
             - list
             - watch
-    
-    version: 8.15.0
-    type: filebeat
     
     elasticsearchRef:
       name: homelab-es

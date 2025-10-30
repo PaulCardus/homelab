@@ -1,0 +1,9 @@
+apiVersion: v2          # Helm Chart API version
+name: redis             # Your chart name (can be anything)
+description: Redis Database
+type: application       # Can be 'application' or 'library'
+version: 1.0.0         # YOUR wrapper version (semantic versioning)
+dependencies:
+  - name: redis
+    version: "23.2.2"  # check https://artifacthub.io/packages/helm/bitnami/redis for latest
+    repository: https://charts.bitnami.com/bitnami

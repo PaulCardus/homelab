@@ -6,35 +6,30 @@ redis:
     password: "changeme123"
   
   master:
-    # Disable persistence - pure in-memory for learning
+    # Disable persistence - NOTE THE INDENTATION
     persistence:
       enabled: false
     
     resources:
       limits:
-        memory: 2Gi      # Bump this up since you have resources
+        memory: 2Gi
         cpu: 1000m
       requests:
         memory: 1Gi
         cpu: 500m
     
-    # Node affinity to land on k8s-monitoring-1
+    # Node affinity
     nodeSelector:
       redis: "true"
     
-    # Optional: Use affinity for more control
-    # affinity:
-    #   nodeAffinity:
-    #     requiredDuringSchedulingIgnoredDuringExecution:
-    #       nodeSelectorTerms:
-    #       - matchExpressions:
-    #         - key: redis
-    #           operator: In
-    #           values:
-    #           - "true"
-  
-  # Set Redis's internal memory limit (80% of K8s limit)
-  master:
+    # CRITICAL: Tolerate the monitoring taint
+    tolerations:
+      - key: "monitoring"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+    
+    # Redis memory config
     configuration: |-
       maxmemory 1600mb
       maxmemory-policy allkeys-lru

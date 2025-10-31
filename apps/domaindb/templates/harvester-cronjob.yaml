@@ -1,0 +1,36 @@
+{{- if .Values.harvester.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "domaindb.fullname" . }}-harvester
+  labels:
+    {{- include "domaindb.labels" . | nindent 4 }}
+    app.kubernetes.io/component: harvester
+spec:
+  schedule: {{ .Values.harvester.schedule | quote }}
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "domaindb.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: harvester
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: harvester
+            image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+            imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+            command: ["python", "harvester.py"]
+            env:
+              {{- toYaml .Values.backend.env | nindent 14 }}
+              - name: HARVEST_CYCLES
+                value: {{ .Values.harvester.cycles | quote }}
+              - name: HARVEST_DELAY_MINUTES
+                value: {{ .Values.harvester.delayMinutes | quote }}
+            resources:
+              {{- toYaml .Values.harvester.resources | nindent 14 }}
+{{- end }}

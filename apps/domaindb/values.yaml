@@ -102,3 +102,18 @@ backend:
 # Disable Redis since we use the existing infrastructure Redis
 redis:
   enabled: false
+
+# Domain Harvester configuration
+harvester:
+  enabled: true
+  # Run every 6 hours
+  schedule: "0 */6 * * *"
+  cycles: 2
+  delayMinutes: 5
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"

@@ -9,7 +9,7 @@ spec:
       repoURL: https://github.com/PaulCardus/homelab
       revision: main
       directories:
-      - path: homelab-apps/*
+      - path: apps/*
   template:
     metadata:
       name: '{{path.basename}}'

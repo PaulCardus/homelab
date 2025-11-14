@@ -1,7 +1,7 @@
 # Cloudflare Tunnel Configuration
 cloudflared:
   # Tunnel token - get this from Cloudflare dashboard after creating tunnel
-  tunnelToken: ""  # TODO: Add your tunnel token here
+  tunnelToken: "eyJhIjoiMTNmMTBhZTdhZjgwNGRkYzViOWIxZWIxODMxNDUxYjAiLCJ0IjoiZmZhNzE2MTgtN2ZmYy00YzRlLWEwYTctMGI1M2RlZWY4MWQ5IiwicyI6IlpqSmtORE13WmpRdE5qRTRPQzAwTjJVeExUazBPVEl0Tnpsa1lqSXdabVk1T0dSbCJ9"
   
   # Tunnel configuration
   config:

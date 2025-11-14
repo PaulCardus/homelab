@@ -206,6 +206,13 @@ eck-stack:
                       kubernetes.namespace: "ingress-nginx"
                   - regexp:
                       message: '^{"time".*}'
+          # Add geographic data for visitor IPs
+          - community_id:
+          - geoip:
+              field: nginx.remote_addr
+              target_field: nginx.geoip
+              when:
+                has_fields: ['nginx.remote_addr']
       
       daemonSet:
         podTemplate:

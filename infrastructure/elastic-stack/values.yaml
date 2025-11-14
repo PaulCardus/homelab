@@ -194,6 +194,18 @@ eck-stack:
         processors:
           - add_cloud_metadata: {}
           - add_host_metadata: {}
+          # Parse NGINX JSON logs
+          - decode_json_fields:
+              fields: ["message"]
+              target: "nginx"
+              when:
+                and:
+                  - contains:
+                      kubernetes.container.name: "controller"
+                  - contains:
+                      kubernetes.namespace: "ingress-nginx"
+                  - regexp:
+                      message: '^{"time".*}'
       
       daemonSet:
         podTemplate:

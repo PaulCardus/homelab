@@ -20,24 +20,28 @@ spec:
       containers:
       - name: cloudflared
         image: cloudflare/cloudflared:2024.6.1
+        {{- if .Values.cloudflared.tunnelToken }}
         args:
         - tunnel
-        - --config
-        - /etc/cloudflared/config/config.yaml
         - run
-        {{- if .Values.cloudflared.tunnelToken }}
+        - --token
+        - $(TUNNEL_TOKEN)
         env:
         - name: TUNNEL_TOKEN
           valueFrom:
             secretKeyRef:
               name: cloudflared-secret
               key: token
-        {{- end }}
+        {{- else }}
+        args:
+        - tunnel
+        - --config
+        - /etc/cloudflared/config/config.yaml
+        - run
         volumeMounts:
         - name: config
           mountPath: /etc/cloudflared/config
           readOnly: true
-        {{- if not .Values.cloudflared.tunnelToken }}
         - name: creds
           mountPath: /etc/cloudflared/creds
           readOnly: true
@@ -52,10 +56,10 @@ spec:
           initialDelaySeconds: 10
           periodSeconds: 10
       volumes:
+      {{- if not .Values.cloudflared.tunnelToken }}
       - name: config
         configMap:
           name: cloudflared-config
-      {{- if not .Values.cloudflared.tunnelToken }}
       - name: creds
         secret:
           secretName: cloudflared-creds

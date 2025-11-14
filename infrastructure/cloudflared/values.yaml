@@ -1,0 +1,39 @@
+# Cloudflare Tunnel Configuration
+cloudflared:
+  # Tunnel token - get this from Cloudflare dashboard after creating tunnel
+  tunnelToken: ""  # TODO: Add your tunnel token here
+  
+  # Tunnel configuration
+  config:
+    tunnel: "homelab-tunnel"
+    credentials-file: /etc/cloudflared/creds/credentials.json
+    
+    # Ingress rules
+    ingress:
+      # Todo app
+      - hostname: to-do-list.app
+        service: http://todo-list.todo-list.svc.cluster.local
+      - hostname: www.to-do-list.app
+        service: http://todo-list.todo-list.svc.cluster.local
+      
+      # ArgoCD (keep private - only accessible via tunnel)
+      - hostname: argocd-tunnel.to-do-list.app
+        service: http://argocd-server.argocd.svc.cluster.local
+      
+      # Default rule (required)
+      - service: http_status:404
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+# Security: Run as non-root
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532

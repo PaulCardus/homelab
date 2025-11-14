@@ -207,7 +207,6 @@ eck-stack:
                   - regexp:
                       message: '^{"time".*}'
           # Add geographic data for visitor IPs
-          - community_id:
           - geoip:
               field: nginx.remote_addr
               target_field: nginx.geoip

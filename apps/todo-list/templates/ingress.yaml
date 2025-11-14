@@ -7,12 +7,12 @@ metadata:
   labels:
     app: {{ .Values.app.name }}
   annotations:
-    # Let's Encrypt certificate management
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Cloudflare handles SSL, so no HTTPS redirect needed
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
     
-    # Security headers and HTTPS redirect
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Security headers
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
     
     # Security headers (using standard annotations instead of snippets)
     nginx.ingress.kubernetes.io/enable-cors: "false"

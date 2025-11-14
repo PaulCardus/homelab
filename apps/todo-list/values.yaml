@@ -25,7 +25,7 @@ app:
     # Add more environment variables as needed
 
 ingress:
-  enabled: false  # Disabled - using Cloudflare Tunnel instead
+  enabled: true  # Re-enabled for Cloudflare Tunnel routing
   className: nginx
   
   # Public domain configuration

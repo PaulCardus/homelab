@@ -121,7 +121,7 @@ eck-stack:
         nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
         nginx.ingress.kubernetes.io/ssl-passthrough: "false"
       hosts:
-        - host: kibana.homelab.local
+        - host: kibana.to-do-list.app
           path: /
 
   eck-beats:

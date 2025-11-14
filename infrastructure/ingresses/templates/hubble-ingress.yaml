@@ -8,7 +8,7 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: hubble.homelab.local
+  - host: hubble.to-do-list.app
     http:
       paths:
       - path: /

@@ -1,0 +1,52 @@
+app:
+  name: todo-list
+  image:
+    repository: your-registry/todo-list  # TODO: Update with your actual image
+    tag: latest
+    pullPolicy: Always
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 3000  # Adjust based on your app's port
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # Environment variables for your app
+  env:
+    - name: NODE_ENV
+      value: production
+    # Add more environment variables as needed
+
+ingress:
+  enabled: true
+  className: nginx
+  
+  # Public domain configuration
+  hosts:
+    - host: to-do-list.app
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.to-do-list.app
+      paths:
+        - path: /
+          pathType: Prefix
+  
+  tls:
+    - secretName: todo-list-tls
+      hosts:
+        - to-do-list.app
+        - www.to-do-list.app
+
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000

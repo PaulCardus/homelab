@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+spec:
+  replicas: 2  # For high availability
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
+      containers:
+      - name: {{ .Values.app.name }}
+        image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+        imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.app.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- toYaml .Values.app.env | nindent 8 }}
+        resources:
+          {{- toYaml .Values.app.resources | nindent 10 }}
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health  # Adjust based on your app's health endpoint
+            port: {{ .Values.app.service.targetPort }}
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready  # Adjust based on your app's readiness endpoint
+            port: {{ .Values.app.service.targetPort }}
+          initialDelaySeconds: 5
+          periodSeconds: 10

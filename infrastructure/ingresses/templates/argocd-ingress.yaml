@@ -7,6 +7,14 @@ metadata:
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
     # Remove ssl-passthrough - it breaks session cookies
+    
+    # Restrict to internal network access only
+    nginx.ingress.kubernetes.io/whitelist-source-range: "192.168.0.0/16,10.0.0.0/8,172.16.0.0/12"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Block external access - only allow local network
+      if ($remote_addr !~ "^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)") {
+        return 403;
+      }
 spec:
   ingressClassName: nginx
   rules:

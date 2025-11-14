@@ -32,8 +32,8 @@ cloudflared:
       cpu: 50m
       memory: 64Mi
 
-# Security: Run as non-root
+# Security: Run as non-root  
 securityContext:
   runAsNonRoot: true
-  runAsUser: 65532
-  runAsGroup: 65532
+  runAsUser: 1000
+  runAsGroup: 1000

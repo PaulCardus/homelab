@@ -19,7 +19,7 @@ spec:
         {{- toYaml .Values.securityContext | nindent 8 }}
       containers:
       - name: cloudflared
-        image: cloudflare/cloudflared:2024.6.1
+        image: cloudflare/cloudflared:latest
         {{- if .Values.cloudflared.tunnelToken }}
         args:
         - tunnel
@@ -49,12 +49,14 @@ spec:
         resources:
           {{- toYaml .Values.cloudflared.resources | nindent 10 }}
         livenessProbe:
-          httpGet:
-            path: /ready
-            port: 2000
-          failureThreshold: 1
-          initialDelaySeconds: 10
-          periodSeconds: 10
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep '[c]loudflared tunnel run' || exit 1"
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 30
       volumes:
       {{- if not .Values.cloudflared.tunnelToken }}
       - name: config

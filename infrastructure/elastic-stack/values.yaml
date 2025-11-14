@@ -123,6 +123,7 @@ eck-stack:
       hosts:
         - host: kibana.to-do-list.app
           path: /
+      tls: []  # Disable TLS until certificate is updated
 
   eck-beats:
     enabled: true

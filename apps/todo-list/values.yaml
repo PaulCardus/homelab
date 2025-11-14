@@ -34,25 +34,11 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
-    - host: www.to-do-list.app
-      paths:
-        - path: /
-          pathType: Prefix
-    - host: test.to-do-list.app
-      paths:
-        - path: /
-          pathType: Prefix
-    - host: "*.to-do-list.app"
-      paths:
-        - path: /
-          pathType: Prefix
   
   tls:
     - secretName: todo-list-tls
       hosts:
         - to-do-list.app
-        - www.to-do-list.app
-        - test.to-do-list.app
 
 # Security context
 securityContext:

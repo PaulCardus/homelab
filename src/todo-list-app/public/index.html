@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Todo List</h1>
+            <p>Stay organized and get things done!</p>
+        </header>
+        
+        <main>
+            <form id="todo-form" class="add-todo">
+                <input 
+                    type="text" 
+                    id="todo-input" 
+                    placeholder="What needs to be done?"
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit">Add Todo</button>
+            </form>
+            
+            <div class="stats">
+                <span id="total-count">0 total</span>
+                <span id="pending-count">0 pending</span>
+                <span id="completed-count">0 completed</span>
+            </div>
+            
+            <ul id="todo-list" class="todo-list"></ul>
+            
+            <div class="actions">
+                <button id="clear-completed" class="btn-secondary">Clear Completed</button>
+                <button id="toggle-all" class="btn-secondary">Toggle All</button>
+            </div>
+        </main>
+        
+        <footer>
+            <p>Built with ❤️ for productivity</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

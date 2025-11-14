@@ -1,50 +1,50 @@
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: {{ .Values.app.name }}-netpol
-  namespace: {{ .Release.Namespace }}
-spec:
-  podSelector:
-    matchLabels:
-      app: {{ .Values.app.name }}
-  policyTypes:
-  - Ingress
-  - Egress
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: {{ .Values.app.name }}-netpol
+#   namespace: {{ .Release.Namespace }}
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: {{ .Values.app.name }}
+#   policyTypes:
+#   - Ingress
+#   - Egress
   
-  ingress:
-  # Allow traffic from ingress-nginx
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: ingress-nginx
-    ports:
-    - protocol: TCP
-      port: {{ .Values.app.service.targetPort }}
+#   ingress:
+#   # Allow traffic from ingress-nginx
+#   - from:
+#     - namespaceSelector:
+#         matchLabels:
+#           name: ingress-nginx
+#     ports:
+#     - protocol: TCP
+#       port: {{ .Values.app.service.targetPort }}
   
-  # Allow health check traffic from kube-system
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: kube-system
-    ports:
-    - protocol: TCP
-      port: {{ .Values.app.service.targetPort }}
+#   # Allow health check traffic from kube-system
+#   - from:
+#     - namespaceSelector:
+#         matchLabels:
+#           name: kube-system
+#     ports:
+#     - protocol: TCP
+#       port: {{ .Values.app.service.targetPort }}
   
-  egress:
-  # Allow DNS resolution
-  - to: []
-    ports:
-    - protocol: UDP
-      port: 53
+#   egress:
+#   # Allow DNS resolution
+#   - to: []
+#     ports:
+#     - protocol: UDP
+#       port: 53
   
-  # Allow HTTPS outbound (for external APIs)
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
+#   # Allow HTTPS outbound (for external APIs)
+#   - to: []
+#     ports:
+#     - protocol: TCP
+#       port: 443
   
-  # Allow HTTP outbound (if needed)
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 80
+#   # Allow HTTP outbound (if needed)
+#   - to: []
+#     ports:
+#     - protocol: TCP
+#       port: 80

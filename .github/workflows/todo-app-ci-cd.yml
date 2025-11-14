@@ -1,0 +1,117 @@
+name: Todo App CI/CD
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/todo-list-app/**'
+      - 'apps/todo-list/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/todo-list-app/**'
+      - 'apps/todo-list/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/todo-list-app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/todo-list-app
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: src/todo-list-app/package-lock.json
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Run linting (if configured)
+      run: npm run lint --if-present
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: ./src/todo-list-app
+    
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+    
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./src/todo-list-app
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Update image tag in values.yaml
+      run: |
+        # Extract the SHA tag from the built image
+        SHA_TAG="main-${{ github.sha }}"
+        
+        # Update the values.yaml file with the new image tag
+        sed -i "s|tag: .*|tag: ${SHA_TAG}|g" apps/todo-list/values.yaml
+        
+        # Show the change
+        echo "Updated image tag to: ${SHA_TAG}"
+        grep -A 3 "image:" apps/todo-list/values.yaml
+    
+    - name: Commit and push updated image tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add apps/todo-list/values.yaml
+        git commit -m "🚀 Deploy todo-app: update to ${{ github.sha }}" || exit 0
+        git push

@@ -1,7 +1,7 @@
 app:
   name: todo-list
   image:
-    repository: your-registry/todo-list  # TODO: Update with your actual image
+    repository: ghcr.io/paulcardus/homelab/todo-list-app
     tag: latest
     pullPolicy: Always
   
